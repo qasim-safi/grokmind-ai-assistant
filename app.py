@@ -38,26 +38,60 @@ BORDER_COLOR   = "#2A2D45"
 # ── Helpers ─────────────────────────────────────────────────────────────────
 def call_grok_api(messages: list) -> str:
     """
-    Call the xAI Grok API and return the assistant's reply.
-    Raises an exception if the call fails.
+    Call the xAI Grok API using the /v1/responses endpoint.
+
+    The messages list contains dicts with 'role' and 'content'.
+    The system message (role='system') is extracted separately and passed
+    as 'instructions'. The remaining user/assistant turns form the 'input'.
+
+    Response structure (xAI /v1/responses):
+      { "output": [ { "type": "message", "role": "assistant",
+                      "content": [ { "type": "output_text", "text": "..." } ] } ] }
     """
-    url     = "https://api.x.ai/v1/chat/completions"
+    url = "https://api.x.ai/v1/responses"
+
+    # Separate system instructions from the conversation turns
+    system_instructions = ""
+    turns = []
+    for msg in messages:
+        if msg["role"] == "system":
+            system_instructions = msg["content"]
+        else:
+            turns.append({"role": msg["role"], "content": msg["content"]})
+
+    # Build payload — 'input' is a string for single-turn or list for multi-turn
     payload = {
-        "model":    GROK_MODEL,
-        "messages": messages,
-        "stream":   False,
+        "model":        GROK_MODEL,
+        "input":        turns if turns else "Hello",
+        "instructions": system_instructions,
     }
+
     headers = {
         "Content-Type":  "application/json",
         "Authorization": f"Bearer {GROK_API_KEY}",
     }
 
-    data    = json.dumps(payload).encode("utf-8")
-    req     = urllib.request.Request(url, data=data, headers=headers, method="POST")
+    data = json.dumps(payload).encode("utf-8")
+    req  = urllib.request.Request(url, data=data, headers=headers, method="POST")
 
-    with urllib.request.urlopen(req, timeout=60) as resp:
+    with urllib.request.urlopen(req, timeout=120) as resp:
         body = json.loads(resp.read().decode("utf-8"))
+
+    # Parse the /v1/responses output format
+    # output → list of items; we want the first "message" item's text content
+    for item in body.get("output", []):
+        if item.get("type") == "message":
+            for part in item.get("content", []):
+                if part.get("type") == "output_text":
+                    return part["text"]
+
+    # Fallback: try OpenAI-compatible format in case the endpoint changes
+    if "choices" in body:
         return body["choices"][0]["message"]["content"]
+
+    raise ValueError(f"Unexpected API response format: {json.dumps(body)[:300]}")
+
+
 
 
 # ── Message Bubble ──────────────────────────────────────────────────────────
