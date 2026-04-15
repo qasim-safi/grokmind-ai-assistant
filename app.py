@@ -16,7 +16,7 @@ import urllib.request
 import urllib.error
 import datetime
 import os
-from config import GROK_API_KEY, GROK_MODEL, APP_TITLE, SYSTEM_PROMPT
+from config import GROQ_API_KEY, GROQ_MODEL, APP_TITLE, SYSTEM_PROMPT
 
 # ── Theme ──────────────────────────────────────────────────────────────────
 ctk.set_appearance_mode("dark")
@@ -36,60 +36,36 @@ BORDER_COLOR   = "#2A2D45"
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
-def call_grok_api(messages: list) -> str:
+def call_groq_api(messages: list) -> str:
     """
-    Call the xAI Grok API using the /v1/responses endpoint.
+    Call the Groq API (FREE tier) using the OpenAI-compatible chat endpoint.
 
-    The messages list contains dicts with 'role' and 'content'.
-    The system message (role='system') is extracted separately and passed
-    as 'instructions'. The remaining user/assistant turns form the 'input'.
+    Endpoint : https://api.groq.com/openai/v1/chat/completions
+    Docs     : https://console.groq.com/docs/openai
+    Free tier: 6000 tokens/min, 500 req/day on llama-3.3-70b-versatile
 
-    Response structure (xAI /v1/responses):
-      { "output": [ { "type": "message", "role": "assistant",
-                      "content": [ { "type": "output_text", "text": "..." } ] } ] }
+    messages = list of {"role": "system"|"user"|"assistant", "content": str}
     """
-    url = "https://api.x.ai/v1/responses"
-
-    # Separate system instructions from the conversation turns
-    system_instructions = ""
-    turns = []
-    for msg in messages:
-        if msg["role"] == "system":
-            system_instructions = msg["content"]
-        else:
-            turns.append({"role": msg["role"], "content": msg["content"]})
-
-    # Build payload — 'input' is a string for single-turn or list for multi-turn
+    url = "https://api.groq.com/openai/v1/chat/completions"
     payload = {
-        "model":        GROK_MODEL,
-        "input":        turns if turns else "Hello",
-        "instructions": system_instructions,
+        "model":       GROQ_MODEL,
+        "messages":    messages,
+        "temperature": 0.7,
+        "max_tokens":  2048,
     }
-
     headers = {
         "Content-Type":  "application/json",
-        "Authorization": f"Bearer {GROK_API_KEY}",
+        "Authorization": f"Bearer {GROQ_API_KEY}",
     }
 
     data = json.dumps(payload).encode("utf-8")
     req  = urllib.request.Request(url, data=data, headers=headers, method="POST")
 
-    with urllib.request.urlopen(req, timeout=120) as resp:
+    with urllib.request.urlopen(req, timeout=60) as resp:
         body = json.loads(resp.read().decode("utf-8"))
 
-    # Parse the /v1/responses output format
-    # output → list of items; we want the first "message" item's text content
-    for item in body.get("output", []):
-        if item.get("type") == "message":
-            for part in item.get("content", []):
-                if part.get("type") == "output_text":
-                    return part["text"]
+    return body["choices"][0]["message"]["content"]
 
-    # Fallback: try OpenAI-compatible format in case the endpoint changes
-    if "choices" in body:
-        return body["choices"][0]["message"]["content"]
-
-    raise ValueError(f"Unexpected API response format: {json.dumps(body)[:300]}")
 
 
 
@@ -257,7 +233,7 @@ class GrokMindApp(ctk.CTk):
 
         ctk.CTkLabel(
             sidebar,
-            text=f"⚡ {GROK_MODEL}",
+            text=f"⚡ {GROQ_MODEL}",
             font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold"),
             text_color=ACCENT,
         ).pack(anchor="w", padx=24, pady=(2, 16))
@@ -296,9 +272,9 @@ class GrokMindApp(ctk.CTk):
         # Status dot
         status_row = ctk.CTkFrame(sidebar, fg_color="transparent")
         status_row.pack(fill="x", padx=20, pady=(0, 24))
-        api_ready = GROK_API_KEY and GROK_API_KEY != "YOUR_GROK_API_KEY_HERE"
+        api_ready = GROQ_API_KEY and GROQ_API_KEY != "YOUR_GROQ_API_KEY_HERE"
         dot_color = SUCCESS if api_ready else "#E05C5C"
-        dot_text  = "● API Ready" if api_ready else "● No API Key"
+        dot_text  = "● Groq Free Tier Ready" if api_ready else "● Add API Key in config.py"
         ctk.CTkLabel(
             status_row,
             text=dot_text,
@@ -407,7 +383,7 @@ class GrokMindApp(ctk.CTk):
 
         ctk.CTkLabel(
             frame,
-            text="Powered by xAI's Grok — your intelligent AI companion.\nAsk me anything: code, analysis, creative writing, or just chat!",
+            text="Powered by Groq (FREE) + LLaMA 3.3 70B — your intelligent AI companion.\nAsk me anything: code, analysis, creative writing, or just chat!",
             font=ctk.CTkFont(family="Segoe UI", size=13),
             text_color=TEXT_SECONDARY,
             justify="center",
@@ -467,11 +443,15 @@ class GrokMindApp(ctk.CTk):
 
     def _fetch_response(self):
         try:
-            reply = call_grok_api(self._history)
+            reply = call_groq_api(self._history)
             self._history.append({"role": "assistant", "content": reply})
             self.after(0, lambda: self._on_response(reply))
         except Exception as exc:
-            error_msg = f"⚠️ Error: {exc}\n\nPlease check your API key in config.py."
+            error_msg = (
+                f"Error: {exc}\n\n"
+                "Please check your Groq API key in config.py.\n"
+                "Get a FREE key at: https://console.groq.com/"
+            )
             self.after(0, lambda: self._on_response(error_msg, is_error=True))
 
     def _on_response(self, text: str, is_error: bool = False):
@@ -526,7 +506,7 @@ class GrokMindApp(ctk.CTk):
         self._show_welcome()
 
     def _clear_history(self):
-        """Keep the UI but reset conversation history."""
+        """Keep the UI but reset conversation history (keeps system prompt)."""
         self._history = [{"role": "system", "content": SYSTEM_PROMPT}]
         self._update_token_label()
 
