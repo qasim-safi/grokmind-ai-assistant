@@ -56,6 +56,7 @@ def call_groq_api(messages: list) -> str:
     headers = {
         "Content-Type":  "application/json",
         "Authorization": f"Bearer {GROQ_API_KEY}",
+        "User-Agent":    "GrokMind/1.0 (CustomTkinter Desktop App)",
     }
 
     data = json.dumps(payload).encode("utf-8")
