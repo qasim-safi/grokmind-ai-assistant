@@ -27,9 +27,12 @@ Thumbs.db
 desktop.ini
 
 # ── SECURITY: Never commit your real API key! ─────────────────────────────────
-# If you add a .env file with secrets, keep it here.
+# config.py holds your API key when filled in — do NOT push it once key is added.
+# Rename to secrets.py or use environment variables for safer key management.
 .env
 secrets.py
+# Uncomment the line below if your config.py contains a real key:
+# config.py
 
 # ── Logs ─────────────────────────────────────────────────────────────────────
 *.log
