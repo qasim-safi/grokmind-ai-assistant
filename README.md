@@ -4,7 +4,7 @@
 
 # 🤖 GrokMind — AI Assistant
 
-### *A sleek, modern AI chat desktop app powered by xAI's Grok API*
+### *A sleek, modern AI chat desktop app powered by Groq's FREE API + LLaMA 3.3 70B*
 
 ---
 
@@ -13,7 +13,9 @@
   &nbsp;
   <img src="https://img.shields.io/badge/CustomTkinter-5.2%2B-7C6FDE?style=flat-square&logo=python&logoColor=white"/>
   &nbsp;
-  <img src="https://img.shields.io/badge/xAI%20Grok%20API-Powered-00C8FF?style=flat-square&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Groq%20API-FREE%20Tier-00C8FF?style=flat-square&logoColor=white"/>
+  &nbsp;
+  <img src="https://img.shields.io/badge/LLaMA%203.3-70B-orange?style=flat-square"/>
   &nbsp;
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square"/>
   &nbsp;
@@ -26,9 +28,9 @@
 
 ## ✨ Overview
 
-**GrokMind** is a polished, production-ready AI chat assistant desktop application built with Python and **CustomTkinter**. It connects to **xAI's Grok API** to provide intelligent, context-aware conversations right from your desktop — no browser needed.
+**GrokMind** is a polished, production-ready AI chat assistant desktop application built with Python and **CustomTkinter**. It connects to **Groq's FREE API** running **Meta's LLaMA 3.3 70B** model to provide lightning-fast, intelligent, context-aware conversations right from your desktop — no browser needed, no credit card required.
 
-Whether you want help with code, need a creative writing partner, want to explore complex topics, or simply want a smart conversational assistant, GrokMind has you covered.
+Whether you want help with code, need a creative writing partner, want to explore complex topics, or simply want a smart conversational AI, GrokMind has you covered — completely free.
 
 ---
 
@@ -38,9 +40,10 @@ Whether you want help with code, need a creative writing partner, want to explor
 |---|---|
 | 🌑 **Dark Glassmorphism UI** | Stunning deep-navy dark theme with purple accents |
 | 💬 **Multi-turn Conversations** | Full conversation context maintained throughout the session |
-| ⚡ **Grok-3 Powered** | Uses xAI's most capable Grok model by default |
-| 🔄 **Async Responses** | Non-blocking API calls — UI stays responsive while Grok thinks |
-| ✍️ **Typing Indicator** | Animated "Grok is thinking…" indicator for better UX |
+| ⚡ **Groq Free Tier** | Completely free — no credit card, no payment needed |
+| 🦙 **LLaMA 3.3 70B** | Meta's powerful 70B model running on Groq's custom hardware |
+| 🔄 **Async Responses** | Non-blocking API calls — UI stays responsive while AI thinks |
+| ✍️ **Typing Indicator** | Animated "AI is thinking…" indicator for better UX |
 | 🗂️ **New Chat / Clear History** | Easily start fresh or reset context |
 | 🏷️ **Quick Prompt Chips** | One-click starter prompts for common tasks |
 | 📊 **Context Word Counter** | Live counter showing how many words are in the current context |
@@ -60,7 +63,10 @@ Whether you want help with code, need a creative writing partner, want to explor
 ### Prerequisites
 
 - Python **3.10** or higher
-- A valid **xAI Grok API key** — get yours at [console.x.ai](https://console.x.ai/)
+- A **Groq API key** (100% FREE — no credit card needed!)
+  - Sign up at [console.groq.com](https://console.groq.com/)
+  - Go to **API Keys** → **Create API Key**
+  - Your key will start with `gsk_...`
 
 ---
 
@@ -100,17 +106,18 @@ pip install -r requirements.txt
 
 ---
 
-### 4. Add Your API Key
+### 4. Add Your Free Groq API Key
 
-Open `config.py` and replace the placeholder with your real Grok API key:
+Open `config.py` and replace the placeholder with your Groq key:
 
 ```python
 # config.py
-GROK_API_KEY: str = "YOUR_GROK_API_KEY_HERE"   # ← Replace this!
+GROQ_API_KEY: str = "gsk_your_actual_key_here"   # ← paste your free key!
+GROQ_MODEL:   str = "llama-3.3-70b-versatile"    # best free model
 ```
 
 > ⚠️ **Security Warning:** Never commit your real API key to a public repository.
-> Add `config.py` to `.gitignore` if you want, or use environment variables.
+> The `.gitignore` already has instructions to protect `config.py`.
 
 ---
 
@@ -129,11 +136,14 @@ The GrokMind window will launch instantly! 🎉
 All settings live in **`config.py`**:
 
 ```python
-# API Key — required
-GROK_API_KEY = "xai-..."
+# Free Groq API Key (get it at console.groq.com)
+GROQ_API_KEY = "gsk_..."          # your key here
 
-# Model Selection
-GROK_MODEL = "grok-3"          # Options: grok-3, grok-3-mini, grok-2-1212
+# Model Selection (all FREE on Groq)
+GROQ_MODEL = "llama-3.3-70b-versatile"   # recommended
+# GROQ_MODEL = "llama-3.1-8b-instant"    # fastest
+# GROQ_MODEL = "mixtral-8x7b-32768"      # longest context (32k)
+# GROQ_MODEL = "gemma2-9b-it"            # Google's Gemma 2
 
 # App Window Title
 APP_TITLE = "GrokMind — AI Assistant"
@@ -164,7 +174,8 @@ grokmind-ai-assistant/
 |---|---|
 | **Python 3.10+** | Core programming language |
 | **CustomTkinter** | Modern, cross-platform GUI framework |
-| **xAI Grok API** | AI intelligence layer (chat completions) |
+| **Groq API (Free)** | AI inference — LLaMA 3.3 70B, ultra-fast |
+| **LLaMA 3.3 70B** | Meta's powerful language model |
 | **urllib (stdlib)** | HTTP requests — no extra dependencies |
 | **threading (stdlib)** | Non-blocking async API calls |
 
@@ -193,10 +204,12 @@ grokmind-ai-assistant/
 ```
 
 1. **User sends a message** → added to conversation history
-2. **Background thread** sends full history to Grok API (multi-turn context)
+2. **Background thread** sends full history to Groq API (multi-turn context)
 3. **Typing indicator** animates while waiting
-4. **AI response** is received and rendered as a styled bubble
+4. **AI response** is received from LLaMA 3.3 70B and rendered as a styled bubble
 5. **Context counter** updates to reflect total words in memory
+
+> Groq's custom LPU hardware makes responses arrive in **under 1 second** on average!
 
 ---
 
